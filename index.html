@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b0d13">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Grok Botパズル</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <!-- title -->
+  <section id="title" class="screen active">
+    <div class="title-box">
+      <canvas id="mascot" width="200" height="200"></canvas>
+      <h1>Grok Bot<span>パズル</span></h1>
+      <p class="sub">同じ色を4つつなげて消そう！</p>
+      <button class="btn big primary" data-go="menu">スタート</button>
+      <button class="btn" data-go="howto">あそびかた</button>
+      <button class="btn" data-open="settings">せってい</button>
+    </div>
+  </section>
+
+  <!-- mode select -->
+  <section id="menu" class="screen">
+    <h2>モードをえらぶ</h2>
+    <button class="mode-card" id="startEndless">
+      <b>とことん</b><small>ひとりで終わりまで。だんだん速くなるよ</small>
+      <span class="hi">ハイスコア <em id="hiScore">0</em></span>
+    </button>
+    <div class="mode-card battle">
+      <b>CPU対戦</b><small>連鎖でおじゃまを送って勝とう</small>
+      <div class="seg" id="levelSeg">
+        <button data-lv="weak">よわい</button><button data-lv="normal" class="on">ふつう</button><button data-lv="strong">つよい</button>
+      </div>
+      <button class="btn primary" id="startBattle">対戦スタート</button>
+    </div>
+    <button class="btn" data-go="title">もどる</button>
+  </section>
+
+  <!-- how to play -->
+  <section id="howto" class="screen">
+    <h2>あそびかた</h2>
+    <ul class="howto">
+      <li>2個1組で落ちてくるGrok Botを積もう。</li>
+      <li>同じ色が<b>4つ以上</b>たて・よこにつながると消えるよ。</li>
+      <li>消えたあと上のGrok Botが落ちてまた消えると<b>れんさ</b>！点数が大きくふえるよ。</li>
+      <li>左から3列目のいちばん上（×印）がうまるとゲームオーバー。</li>
+      <li>CPU対戦では、れんさで灰色の<b>おじゃま</b>を相手に送れるよ。送られてきたおじゃまは、自分のれんさで打ち消せるよ。</li>
+    </ul>
+    <h3>操作</h3>
+    <ul class="howto">
+      <li>スワイプ：左右にドラッグで移動、タップで回転、下へドラッグでゆっくり落下、下へすばやくはじくと一気に落下</li>
+      <li>ボタン：← → で移動、↺ ↻ で回転、⤓ で落下</li>
+      <li>PC：←→ 移動、↓ ゆっくり落下、Z / X（↑）回転、スペース 一気に落下、P 一時停止</li>
+    </ul>
+    <button class="btn" data-go="title">もどる</button>
+  </section>
+
+  <!-- game -->
+  <section id="game" class="screen">
+    <header class="hud">
+      <div class="hud-l"><small>SCORE</small><b id="score">0</b></div>
+      <div class="hud-c" id="hudInfo"></div>
+      <button class="icon-btn" id="pauseBtn" aria-label="一時停止">⏸</button>
+    </header>
+    <div id="arena">
+      <div class="side" id="side0">
+        <canvas class="strip" id="strip0"></canvas>
+        <div class="fieldwrap"><canvas class="field" id="field0"></canvas><div class="popup" id="pop0"></div></div>
+      </div>
+      <div class="side cpu" id="side1">
+        <div class="cpu-tag" id="cpuTag">CPU</div>
+        <canvas class="strip" id="strip1"></canvas>
+        <div class="fieldwrap"><canvas class="field" id="field1"></canvas><div class="popup" id="pop1"></div></div>
+      </div>
+    </div>
+    <div id="controls">
+      <button class="ctl" data-act="left" aria-label="左">←</button>
+      <button class="ctl" data-act="ccw" aria-label="左回転">↺</button>
+      <button class="ctl" data-act="cw" aria-label="右回転">↻</button>
+      <button class="ctl" data-act="right" aria-label="右">→</button>
+      <button class="ctl drop" data-act="drop" aria-label="落下">⤓<small>落下</small></button>
+    </div>
+  </section>
+
+  <!-- result -->
+  <section id="result" class="screen">
+    <div class="result-box">
+      <canvas id="resultFace" width="120" height="120"></canvas>
+      <h2 id="resTitle">ゲームオーバー</h2>
+      <dl>
+        <dt>スコア</dt><dd id="resScore">0</dd>
+        <dt>最大れんさ</dt><dd id="resChain">0</dd>
+        <dt id="resHiLabel">ハイスコア</dt><dd id="resHi">0</dd>
+      </dl>
+      <button class="btn big primary" id="retryBtn">もう一度</button>
+      <button class="btn" data-go="menu">モード選択へ</button>
+    </div>
+  </section>
+
+  <!-- overlays -->
+  <div class="overlay" id="pause">
+    <div class="panel">
+      <h2>一時停止</h2>
+      <button class="btn big primary" id="resumeBtn">つづける</button>
+      <button class="btn" id="restartBtn">やり直す</button>
+      <button class="btn" data-open="settings">せってい</button>
+      <button class="btn" id="quitBtn">タイトルへ</button>
+    </div>
+  </div>
+  <div class="overlay" id="settings">
+    <div class="panel">
+      <h2>せってい</h2>
+      <label class="row">効果音 <input type="checkbox" id="optSound" checked></label>
+      <label class="row">色の数
+        <select id="optColors"><option value="4">4色（ふつう）</option><option value="5">5色（むずかしい）</option></select>
+      </label>
+      <button class="btn primary" data-close="settings">とじる</button>
+    </div>
+  </div>
+</div>
+<script src="logic.js"></script>
+<script src="render.js"></script>
+<script src="sound.js"></script>
+<script src="game.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

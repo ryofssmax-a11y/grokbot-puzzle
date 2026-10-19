@@ -1,0 +1,4 @@
+weak {"avgMaxChain":2.9,"maxChains":"3,4,3,3,3,3,2,2,4,2","avgScore":6371,"deaths":0,"slowestMoveMs":1}
+normal {"avgMaxChain":4.8,"maxChains":"4,7,4,4,7,5,4,4,5,4","avgScore":28086,"deaths":0,"slowestMoveMs":10}
+strong {"avgMaxChain":6.6,"maxChains":"8,6,6,7,6,7,6,7,7,6","avgScore":60162,"deaths":0,"slowestMoveMs":26}
+battles (wins A,B): {"strong-vs-weak":[10,0],"strong-vs-normal":[9,1],"normal-vs-weak":[10,0]}

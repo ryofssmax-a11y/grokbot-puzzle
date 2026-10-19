@@ -1,0 +1,104 @@
+{
+ "layout 390x844": {
+  "endless": {
+   "problems": [],
+   "field0": "312x624",
+   "field1": "0x0"
+  },
+  "battle": {
+   "problems": [],
+   "field0": "222x444",
+   "field1": "132x264"
+  }
+ },
+ "layout 375x667": {
+  "endless": {
+   "problems": [],
+   "field0": "234x468",
+   "field1": "0x0"
+  },
+  "battle": {
+   "problems": [],
+   "field0": "210x420",
+   "field1": "126x252"
+  }
+ },
+ "layout 1280x800": {
+  "endless": {
+   "problems": [],
+   "field0": "294x588",
+   "field1": "0x0"
+  },
+  "battle": {
+   "problems": [],
+   "field0": "294x588",
+   "field1": "174x348"
+  }
+ },
+ "inputs": {
+  "btnLeft": true,
+  "btnRotate": true,
+  "btnRotateCcw": true,
+  "swipeRight2": 2,
+  "tapRotate": true,
+  "flickHardDrop": true,
+  "keyRight": true,
+  "keyZ": true,
+  "keySpace": true,
+  "pause": true,
+  "reachedResult": true,
+  "result": {
+   "mode": "endless",
+   "level": "normal",
+   "score": 1911,
+   "maxChain": 3,
+   "cpuMaxChain": null,
+   "cpuScore": null,
+   "win": null,
+   "time": 19.832499999999904
+  }
+ },
+ "chainPopup": {
+  "expectedChain": 4,
+  "maxChainAfter": 4,
+  "screenshot": true,
+  "gifFrames": 35
+ },
+ "battle weak": {
+  "mode": "battle",
+  "level": "weak",
+  "score": 2940,
+  "maxChain": 3,
+  "cpuMaxChain": 0,
+  "cpuScore": 0,
+  "win": true,
+  "time": 45.698999999999955,
+  "wallSec": 9,
+  "resultScreen": true
+ },
+ "battle normal": {
+  "mode": "battle",
+  "level": "normal",
+  "score": 140,
+  "maxChain": 1,
+  "cpuMaxChain": 3,
+  "cpuScore": 3520,
+  "win": false,
+  "time": 32.09939999999983,
+  "wallSec": 7,
+  "resultScreen": true
+ },
+ "battle strong": {
+  "mode": "battle",
+  "level": "strong",
+  "score": 0,
+  "maxChain": 0,
+  "cpuMaxChain": 5,
+  "cpuScore": 5100,
+  "win": false,
+  "time": 17.29915000000005,
+  "wallSec": 2,
+  "resultScreen": true
+ }
+}
+ERRORS: none
