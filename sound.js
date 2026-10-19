@@ -24,7 +24,30 @@
     f.type = 'lowpass'; f.frequency.value = 600; src.buffer = buf; g.gain.value = vol;
     src.connect(f).connect(g).connect(a.destination); src.start();
   }
+  // voice-like stinger: buzzy saw through two vowel formants, pitch rises with the chain
+  function voice(freq, dur, vowel, delay = 0, vol = 0.09) {
+    if (!S.on) return; const a = ctx(); if (!a) return;
+    const F = { a: [800, 1200], i: [300, 2300], o: [500, 900], e: [450, 1900] }[vowel] || [700, 1100];
+    const t = a.currentTime + delay, o = a.createOscillator(), g = a.createGain(), out = a.createGain();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(freq * 0.9, t); o.frequency.exponentialRampToValueAtTime(freq * 1.12, t + dur * 0.6);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g);
+    for (const f of F) { const bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = 6; g.connect(bp).connect(out); }
+    out.gain.value = 2.2; out.connect(a.destination); o.start(t); o.stop(t + dur + 0.05);
+  }
   S.unlock = ctx;
+  const VOWELS = ['o', 'a', 'i', 'e', 'a', 'o', 'i', 'a'];
+  S.stinger = (chain) => { // "combo" call-out
+    const f = 220 * Math.pow(2, Math.min(chain, 12) * 1.5 / 12);
+    voice(f, 0.18, VOWELS[chain % VOWELS.length]); voice(f * 1.26, 0.22, 'a', 0.12);
+    if (chain >= 5) { voice(f * 1.5, 0.35, 'o', 0.24, 0.1); tone(f * 4, 0.4, 'triangle', 0.05, f * 6, 0.24); }
+  };
+  S.fever = () => { [0, 4, 7, 12, 16].forEach((st, i) => tone(392 * Math.pow(2, st / 12), 0.5, 'square', 0.035, 0, i * 0.05)); noise(0.4, 0.08); };
+  S.fanfare = () => [[523, 0], [523, 0.1], [523, 0.2], [698, 0.32], [880, 0.56], [1046, 0.7]].forEach(([f, d]) => { tone(f, 0.24, 'square', 0.05, 0, d); tone(f / 2, 0.24, 'triangle', 0.06, 0, d); });
+  S.allclear = () => { [523, 659, 784, 1046, 1318, 1568].forEach((f, i) => tone(f, 0.3, 'triangle', 0.09, 0, i * 0.07)); voice(330, 0.5, 'a', 0.45, 0.1); };
+  S.levelup = () => [659, 784, 988].forEach((f, i) => tone(f, 0.16, 'square', 0.045, 0, i * 0.08));
+  S.achieve = () => [784, 1175, 1568].forEach((f, i) => tone(f, 0.28, 'sine', 0.1, 0, i * 0.1));
+  S.tick = () => tone(1400 + Math.random() * 400, 0.025, 'sine', 0.02);
   S.move = () => tone(520, 0.03, 'square', 0.025);
   S.rotate = () => tone(820, 0.05, 'triangle', 0.06, 1100);
   S.drop = () => tone(220, 0.1, 'sine', 0.16, 110);

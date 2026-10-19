@@ -41,7 +41,8 @@ test('multi-chain: 2 and 3 chains with correct scores', () => {
   assert.equal(r2.chain, 2);
   // step1: 4 pieces, 1 color, chain1 -> 10*4*1 = 40; step2: 4 pieces chain2 -> 10*4*8 = 320
   assert.deepEqual(r2.steps.map(s => s.score), [40, 320]);
-  assert.equal(r2.score, 360);
+  assert.equal(r2.score, 360 + L.ALL_CLEAR_BONUS); // board ends empty -> all clear
+  assert.equal(r2.allClear, true);
   assert.equal(count(r2.board), 0);
 
   const three = board([
@@ -60,7 +61,7 @@ test('scoring: color bonus and group bonus', () => {
   // two colors cleared at once (4 + 5 pieces): 10*9*(0 + 3 + 2)
   const r = L.resolve(board(['11.222', '11..22']));
   assert.equal(r.chain, 1);
-  assert.equal(r.score, 10 * 9 * (3 + 2));
+  assert.equal(r.score, 10 * 9 * (3 + 2) + L.ALL_CLEAR_BONUS);
   assert.equal(L.stepScore(1, [{ color: 1, cells: new Array(11) }]), 10 * 11 * 10);
   assert.equal(L.stepScore(4, [{ color: 1, cells: new Array(4) }]), 10 * 4 * 32);
 });
@@ -151,4 +152,15 @@ test('strong AI fires a 2-chain when garbage is pending', () => {
   const b = board(['313...', '113...']);
   const m = L.chooseMove(b, [[1, 3], [4, 4]], 'strong', { numColors: 4, pending: 12 }, L.rng(2));
   assert.ok(L.resolve(L.placeAt(b, m.x, m.rot, 1, 3)).chain >= 2);
+});
+
+test('all-clear bonus only when the field is completely empty after a chain', () => {
+  const r = L.resolve(board(['11....', '11....']));
+  assert.equal(r.allClear, true);
+  assert.equal(r.score, 40 + 2100);
+  const r2 = L.resolve(board(['11....', '11...2']));
+  assert.equal(r2.allClear, false);
+  assert.equal(r2.score, 40);
+  assert.equal(L.resolve(L.newBoard()).allClear, false); // no chain, no bonus
+  assert.equal(L.garbageFromScore(L.ALL_CLEAR_BONUS, 0).count, 30);
 });

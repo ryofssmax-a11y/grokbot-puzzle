@@ -16,6 +16,8 @@
   }
   const isColor = c => c >= 1 && c <= 5;
   function height(b, x) { let y = 0; while (y < H && b[idx(x, y)]) y++; return y; }
+  const ALL_CLEAR_BONUS = 2100; // = 30 garbage in battle
+  const isEmpty = b => { for (let i = 0; i < b.length; i++) if (b[i]) return false; return true; };
   const isDead = b => b[idx(SPAWN_X, SPAWN_Y)] !== 0;
 
   /* ---------- falling pair ---------- */
@@ -130,7 +132,9 @@
     const nb = cloneBoard(b), steps = [];
     let chain = 0, score = 0, s;
     while ((s = clearStep(nb, chain + 1))) { chain++; score += s.score; s.board = cloneBoard(nb); steps.push(s); }
-    return { board: nb, chain, score, steps };
+    const allClear = chain > 0 && isEmpty(nb);
+    if (allClear) score += ALL_CLEAR_BONUS;
+    return { board: nb, chain, score, steps, allClear };
   }
   // fast version for the AI (mutates b)
   function resolveFast(b) {
@@ -322,7 +326,7 @@
 
   const api = {
     W, H, VIS, GARBAGE, SPAWN_X, SPAWN_Y, OFS, GARBAGE_RATE, AI_LEVELS,
-    idx, newBoard, cloneBoard, get, height, isDead, isColor,
+    idx, newBoard, cloneBoard, get, height, isDead, isColor, isEmpty, ALL_CLEAR_BONUS,
     childPos, fits, spawnPair, shift, rotate, hardDropY, place, placeAt,
     gravity, findGroups, stepScore, clearStep, resolve, resolveFast,
     garbageFromScore, offsetGarbage, dropGarbage, rng, pairSequence,

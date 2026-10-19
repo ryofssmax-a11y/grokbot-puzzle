@@ -53,13 +53,17 @@
     constructor(game, id, cpu) {
       Object.assign(this, {
         game, id, cpu, board: L.newBoard(), i: 0, score: 0, maxChain: 0, chain: 0, pending: 0, carry: 0,
-        placed: 0, dead: false, pair: null, anim: null, fallT: 0, lockT: 0, lockResets: 0, soft: false,
+        placed: 0, cleared: 0, allClears: 0, lastLevel: 1, dead: false, pair: null, anim: null, fallT: 0, lockT: 0, lockResets: 0, soft: false,
         squish: new Map(), particles: [], state: 'spawn',
       });
     }
     get busy() { return !this.pair; }
     update(dt) {
-      for (const q of this.particles) { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 9 * dt; q.life -= dt * 1.4; }
+      for (const q of this.particles) {
+        q.x += q.vx * dt; q.y += q.vy * dt;
+        if (q.kind === 'conf') { q.vx *= 1 - 1.5 * dt; q.vy = Math.min(q.vy + 6 * dt, 2.2); q.rot += q.spin * dt; q.life -= dt * 0.45; }
+        else { q.vy += 9 * dt; q.life -= dt * (q.decay || 1.4); }
+      }
       this.particles = this.particles.filter(q => q.life > 0);
       if (this.dead) return;
       if (this.anim) {
@@ -75,6 +79,8 @@
       this.pair = L.spawnPair(this.game.seq(this.i++));
       this.fallT = 0; this.lockT = 0; this.lockResets = 0; this.soft = false;
       this.state = 'fall';
+      const lv = this.game.levelOf(this);
+      if (lv > this.lastLevel) { this.lastLevel = lv; this.game.hooks.levelup && this.game.hooks.levelup(this, lv); }
       if (this.cpu) this.cpu.onSpawn(this);
       this.game.onSpawn(this);
     }
@@ -144,16 +150,26 @@
         this.game.sfx('clear', step.chain);
         this.game.onChainStep(this, step);
         this.anim = { kind: 'pop', t: 0, dur: 0.5, cells: step.removed, done: () => {
-          for (const c of step.removed) for (let k = 0; k < 7; k++) {
+          if (this.game.hooks.burst) this.game.hooks.burst(this, step.removed, step.chain);
+          else for (const c of step.removed) for (let k = 0; k < 7; k++) {
             const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 4;
             this.particles.push({ x: c.x + 0.5, y: L.VIS - c.y - 0.5, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 3, life: 1, col: GBRender.COLORS[c.c] });
           }
+          this.cleared += step.removed.filter(c => c.c !== L.GARBAGE).length;
           this.board = nb; this.score += step.score;
           this.animFall(step.moves, () => { this.state = 'check'; });
         } };
         return;
       }
-      if (this.chain) this.maxChain = Math.max(this.maxChain, this.chain);
+      if (this.chain) {
+        this.maxChain = Math.max(this.maxChain, this.chain);
+        if (L.isEmpty(this.board)) { // all clear!
+          this.allClears++; this.score += L.ALL_CLEAR_BONUS;
+          this.game.onBonus(this, L.ALL_CLEAR_BONUS);
+          this.game.hooks.allclear && this.game.hooks.allclear(this);
+        }
+        this.game.hooks.chainEnd && this.game.hooks.chainEnd(this, this.chain);
+      }
       this.chain = 0;
       if (this.pending > 0) {
         const n = Math.min(30, this.pending);
@@ -193,22 +209,22 @@
     }
     sfx(name, arg) { if (this.hooks.sfx) this.hooks.sfx(name, arg); }
     onSpawn(p) { this.hooks.spawn && this.hooks.spawn(p); }
-    onChainStep(p, step) {
-      if (this.mode === 'battle') {
-        const opp = this.players[1 - p.id];
-        const g = L.garbageFromScore(step.score, p.carry);
-        p.carry = g.carry;
-        const o = L.offsetGarbage(p.pending, g.count);
-        p.pending = o.pending; opp.pending += o.send;
-      }
-      this.hooks.chain && this.hooks.chain(p, step);
+    sendGarbage(p, score) {
+      if (this.mode !== 'battle') return;
+      const opp = this.players[1 - p.id];
+      const g = L.garbageFromScore(score, p.carry);
+      p.carry = g.carry;
+      const o = L.offsetGarbage(p.pending, g.count);
+      p.pending = o.pending; opp.pending += o.send;
     }
+    onChainStep(p, step) { this.sendGarbage(p, step.score); this.hooks.chain && this.hooks.chain(p, step); }
+    onBonus(p, score) { this.sendGarbage(p, score); }
     onDead(p) {
       if (this.over) return;
       this.over = true;
       const me = this.players[0];
       const opp = this.players[1];
-      const result = { mode: this.mode, level: this.level, score: me.score, maxChain: me.maxChain, cpuMaxChain: opp ? opp.maxChain : null, cpuScore: opp ? opp.score : null, win: this.mode === 'battle' ? p.id === 1 : null, time: this.time };
+      const result = { mode: this.mode, level: this.level, score: me.score, maxChain: me.maxChain, cpuMaxChain: opp ? opp.maxChain : null, cleared: me.cleared, allClears: me.allClears, colors: this.numColors, cpuScore: opp ? opp.score : null, win: this.mode === 'battle' ? p.id === 1 : null, time: this.time };
       this.hooks.end && this.hooks.end(result);
     }
   }

@@ -16,33 +16,90 @@
     g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
   }
 
-  // sprite cache: one canvas per (color, eye state, pixel size)
+  // ---- shapes ----
+  const SHAPES = ['round', 'triangle', 'star', 'cloud', 'heart', 'square', 'diamond'];
+  const SHAPE_JP = { round: '丸', triangle: '三角', star: '星', cloud: 'くも', heart: 'ハート', square: '四角', diamond: 'ダイヤ' };
+  const PER_COLOR = { 1: 'heart', 2: 'round', 3: 'triangle', 4: 'star', 5: 'diamond' };
+  let shapeMap = { 1: 'round', 2: 'round', 3: 'round', 4: 'round', 5: 'round' };
+  const shapeOf = c => (c === 9 ? 'rock' : shapeMap[c] || 'round');
+  function setShapes(mode, custom) {
+    shapeMap = mode === 'perColor' ? { ...PER_COLOR } : mode === 'custom' ? { ...PER_COLOR, ...(custom || {}) } : { 1: 'round', 2: 'round', 3: 'round', 4: 'round', 5: 'round' };
+  }
+  // where the capsule eyes sit for each shape (fractions of the cell)
+  const EYES = {
+    round: [0.34, 0.66, 0.33, 0.34, 0.13], square: [0.34, 0.66, 0.32, 0.34, 0.13], cloud: [0.36, 0.64, 0.42, 0.28, 0.12],
+    heart: [0.35, 0.65, 0.3, 0.3, 0.12], triangle: [0.41, 0.59, 0.5, 0.26, 0.1], star: [0.42, 0.58, 0.42, 0.22, 0.09],
+    diamond: [0.4, 0.6, 0.36, 0.28, 0.1], rock: [0.34, 0.66, 0.5, 0.3, 0.13],
+  };
+  const BRIDGE = { round: 0.5, square: 0.55, cloud: 0.5, heart: 0.4, triangle: 0.3, star: 0.26, diamond: 0.3, rock: 0.5 };
+
+  function roundedPoly(g, pts, r) {
+    const n = pts.length;
+    g.beginPath();
+    const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    const m0 = mid(pts[n - 1], pts[0]);
+    g.moveTo(m0[0], m0[1]);
+    for (let i = 0; i < n; i++) { const p = pts[i], q = pts[(i + 1) % n], m = mid(p, q); g.arcTo(p[0], p[1], m[0], m[1], r); }
+    g.closePath();
+  }
+  function shapePath(g, shape, s) {
+    const P = (pts) => pts.map(([x, y]) => [x * s, y * s]);
+    switch (shape) {
+      case 'square': roundRect(g, s * 0.07, s * 0.07, s * 0.86, s * 0.86, s * 0.16); break;
+      case 'triangle': roundedPoly(g, P([[0.5, 0.06], [0.95, 0.9], [0.05, 0.9]]), s * 0.13); break;
+      case 'diamond': roundedPoly(g, P([[0.5, 0.04], [0.96, 0.5], [0.5, 0.96], [0.04, 0.5]]), s * 0.1); break;
+      case 'star': {
+        const pts = [];
+        for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? 0.23 : 0.49; pts.push([0.5 + Math.cos(a) * rr, 0.55 + Math.sin(a) * rr]); }
+        roundedPoly(g, P(pts), s * 0.06); break;
+      }
+      case 'heart':
+        g.beginPath(); g.moveTo(s * 0.5, s * 0.93);
+        g.bezierCurveTo(s * 0.12, s * 0.66, s * 0.0, s * 0.42, s * 0.12, s * 0.22);
+        g.bezierCurveTo(s * 0.26, s * 0.02, s * 0.46, s * 0.1, s * 0.5, s * 0.24);
+        g.bezierCurveTo(s * 0.54, s * 0.1, s * 0.74, s * 0.02, s * 0.88, s * 0.22);
+        g.bezierCurveTo(s * 1.0, s * 0.42, s * 0.88, s * 0.66, s * 0.5, s * 0.93);
+        g.closePath(); break;
+      case 'cloud':
+        g.beginPath();
+        for (const [x, y, r] of [[0.3, 0.55, 0.22], [0.5, 0.4, 0.27], [0.72, 0.55, 0.22], [0.5, 0.68, 0.24], [0.2, 0.7, 0.15], [0.8, 0.7, 0.15]]) {
+          g.moveTo(s * (x + r), s * y); g.arc(s * x, s * y, s * r, 0, Math.PI * 2);
+        }
+        break;
+      case 'rock': roundedPoly(g, P([[0.3, 0.08], [0.72, 0.1], [0.94, 0.38], [0.88, 0.8], [0.6, 0.94], [0.2, 0.9], [0.05, 0.6], [0.1, 0.25]]), s * 0.1); break;
+      default: roundRect(g, s * 0.05, s * 0.05, s * 0.9, s * 0.9, s * 0.42);
+    }
+  }
+
+  // sprite cache: one canvas per (color, eye state, pixel size, shape)
   const cache = new Map();
-  function sprite(c, eyes, px) {
-    const key = c + eyes + px;
+  function sprite(c, eyes, px, shape) {
+    shape = shape || shapeOf(c);
+    const key = c + eyes + px + shape;
     let cv = cache.get(key);
     if (cv) return cv;
     cv = document.createElement('canvas'); cv.width = cv.height = px;
     const g = cv.getContext('2d'), s = px, base = COLORS[c];
-    const pad = s * 0.05;
-    roundRect(g, pad, pad, s - 2 * pad, s - 2 * pad, s * 0.42);
-    const grad = g.createLinearGradient(0, pad, 0, s - pad);
+    g.lineJoin = 'round';
+    shapePath(g, shape, s);
+    g.lineWidth = Math.max(1.5, s * 0.08); g.strokeStyle = shade(base, 0.15); g.stroke(); // rim (outside only once filled over)
+    const grad = g.createLinearGradient(0, 0, 0, s);
     grad.addColorStop(0, shade(base, c === 9 ? -0.05 : -0.18)); grad.addColorStop(1, shade(base, c === 9 ? -0.4 : -0.6));
     g.fillStyle = grad; g.fill();
-    g.lineWidth = Math.max(1, s * 0.045); g.strokeStyle = shade(base, 0.15); g.stroke();
+    g.save(); g.clip();
     g.fillStyle = 'rgba(255,255,255,0.18)'; // glossy highlight
     g.beginPath(); g.ellipse(s * 0.36, s * 0.24, s * 0.2, s * 0.08, -0.3, 0, Math.PI * 2); g.fill();
-    // capsule eyes (two tall rounded rectangles)
-    const ew = s * 0.13, eh = s * 0.34, ey = s * 0.33;
+    g.restore();
+    const [e1, e2, ey, ehf, ewf] = EYES[shape] || EYES.round, ew = s * ewf, eh = s * ehf;
     g.fillStyle = '#fff'; g.strokeStyle = '#fff';
     if (c === 9) { // garbage: sleepy closed eyes
       g.lineWidth = s * 0.06; g.lineCap = 'round';
-      for (const ex of [0.34, 0.66]) { g.beginPath(); g.arc(s * ex, s * 0.5, s * 0.08, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke(); }
+      for (const ex of [e1, e2]) { g.beginPath(); g.arc(s * ex, s * ey, s * 0.08, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke(); }
     } else if (eyes === 'c') { // blink
-      for (const ex of [0.34, 0.66]) { roundRect(g, s * ex - ew / 2, s * 0.5, ew, s * 0.06, s * 0.03); g.fill(); }
+      for (const ex of [e1, e2]) { roundRect(g, s * ex - ew / 2, s * (ey + ehf / 2), ew, s * 0.06, s * 0.03); g.fill(); }
     } else {
       g.shadowColor = shade(base, 0.4); g.shadowBlur = s * 0.12;
-      for (const ex of [0.34, 0.66]) { roundRect(g, s * ex - ew / 2, ey, ew, eh, ew / 2); g.fill(); }
+      for (const ex of [e1, e2]) { roundRect(g, s * ex - ew / 2, s * ey, ew, eh, ew / 2); g.fill(); }
     }
     cache.set(key, cv);
     return cv;
@@ -95,10 +152,10 @@
       if (anim && anim.kind === 'pop') { pop = anim; for (const c of anim.cells) hidden.add(L.idx(c.x, c.y)); }
 
       // bridges between connected same-colored resting pieces (merged look)
-      const bw = cs * 0.5;
       for (let y = 0; y < VIS; y++) for (let x = 0; x < W; x++) {
         const i = L.idx(x, y), c = b[i];
         if (!L.isColor(c) || hidden.has(i)) continue;
+        const bw = cs * BRIDGE[shapeOf(c)];
         g.fillStyle = bodyColor(c);
         if (x < W - 1 && b[i + 1] === c && !hidden.has(i + 1)) g.fillRect(x * cs + cs / 2, this.sy(y) + (cs - bw) / 2 + cs * 0.05, cs, bw);
         if (y < VIS - 1 && b[i + W] === c && !hidden.has(i + W)) g.fillRect(x * cs + (cs - bw) / 2, this.sy(y) - cs / 2, bw, cs);
@@ -152,9 +209,15 @@
       }
       // particles
       for (const q of p.particles) {
-        g.globalAlpha = Math.max(0, q.life);
+        g.globalAlpha = Math.max(0, Math.min(1, q.life));
         g.fillStyle = q.col;
-        g.beginPath(); g.arc(q.x * cs, q.y * cs, cs * 0.09 * (0.5 + q.life), 0, Math.PI * 2); g.fill();
+        if (q.kind === 'conf') {
+          g.save(); g.translate(q.x * cs, q.y * cs); g.rotate(q.rot);
+          g.fillRect(-cs * 0.09, -cs * 0.045 * Math.abs(Math.cos(q.rot * 2)) - 1, cs * 0.18, cs * 0.09 * Math.abs(Math.cos(q.rot * 2)) + 2);
+          g.restore();
+        } else {
+          g.beginPath(); g.arc(q.x * cs, q.y * cs, cs * (q.size || 0.09) * (0.5 + q.life), 0, Math.PI * 2); g.fill();
+        }
       }
       g.globalAlpha = 1;
       if (p.dead) { g.fillStyle = 'rgba(0,0,0,0.45)'; g.fillRect(0, 0, W * cs, VIS * cs); }
@@ -183,5 +246,5 @@
     if (big > 5) { g.textAlign = 'left'; g.fillStyle = '#fff'; g.fillText('×' + pending, x + 2, h - 6); }
   }
 
-  window.GBRender = { COLORS, sprite, FieldView, drawStrip, roundRect };
+  window.GBRender = { COLORS, SHAPES, SHAPE_JP, PER_COLOR, sprite, shapeOf, setShapes, FieldView, drawStrip, roundRect };
 })();

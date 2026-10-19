@@ -22,6 +22,7 @@
       <h1>Grok Bot<span>パズル</span></h1>
       <p class="sub">同じ色を4つつなげて消そう！</p>
       <button class="btn big primary" data-go="menu">スタート</button>
+      <button class="btn" data-go="records">記録</button>
       <button class="btn" data-go="howto">あそびかた</button>
       <button class="btn" data-open="settings">せってい</button>
     </div>
@@ -41,6 +42,23 @@
       </div>
       <button class="btn primary" id="startBattle">対戦スタート</button>
     </div>
+    <button class="btn" data-go="title">もどる</button>
+  </section>
+
+  <!-- records -->
+  <section id="records" class="screen">
+    <h2>記録</h2>
+    <div class="stat-grid" id="recSummary"></div>
+    <h3>CPU対戦の戦績</h3>
+    <table class="rec-table" id="recCpu"></table>
+    <h3>ハイスコア TOP10</h3>
+    <div class="seg small" id="topSeg"><button data-mode="endless" class="on">とことん</button><button data-mode="battle">CPU対戦</button></div>
+    <ol class="top-list" id="recTop"></ol>
+    <h3>実績</h3>
+    <div class="badges" id="recBadges"></div>
+    <h3>プレイ履歴</h3>
+    <ul class="history" id="recHistory"></ul>
+    <button class="btn danger" id="resetRecords">記録をリセット</button>
     <button class="btn" data-go="title">もどる</button>
   </section>
 
@@ -81,6 +99,8 @@
         <div class="fieldwrap"><canvas class="field" id="field1"></canvas><div class="popup" id="pop1"></div></div>
       </div>
     </div>
+    <div id="flash"></div>
+    <div id="banner"></div>
     <div id="controls">
       <button class="ctl" data-act="left" aria-label="左">←</button>
       <button class="ctl" data-act="ccw" aria-label="左回転">↺</button>
@@ -115,10 +135,19 @@
       <button class="btn" id="quitBtn">タイトルへ</button>
     </div>
   </div>
+  <div id="toasts"></div>
   <div class="overlay" id="settings">
     <div class="panel">
       <h2>せってい</h2>
       <label class="row">効果音 <input type="checkbox" id="optSound" checked></label>
+      <label class="row">演出
+        <select id="optFx"><option value="flashy">派手</option><option value="normal">ふつう</option><option value="calm">控えめ</option></select>
+      </label>
+      <label class="row">形
+        <select id="optShape"><option value="round">丸だけ</option><option value="perColor">色ごとに形を変える</option><option value="custom">自分で選ぶ</option></select>
+      </label>
+      <div id="shapePreview" class="shape-preview"></div>
+      <div id="customShapes" class="custom-shapes"></div>
       <label class="row">色の数
         <select id="optColors"><option value="4">4色（ふつう）</option><option value="5">5色（むずかしい）</option></select>
       </label>
@@ -129,6 +158,8 @@
 <script src="logic.js"></script>
 <script src="render.js"></script>
 <script src="sound.js"></script>
+<script src="records.js"></script>
+<script src="fx.js"></script>
 <script src="game.js"></script>
 <script src="ui.js"></script>
 </body>

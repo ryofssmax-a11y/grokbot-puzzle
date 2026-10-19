@@ -1,5 +1,5 @@
-const CACHE = 'gbp-v1';
-const FILES = ['./', 'index.html', 'style.css', 'logic.js', 'render.js', 'sound.js', 'game.js', 'ui.js', 'ai-worker.js', 'manifest.json', 'icon.svg', 'icon-192.png', 'icon-512.png'];
+const CACHE = 'gbp-v2';
+const FILES = ['./', 'index.html', 'style.css', 'logic.js', 'render.js', 'sound.js', 'records.js', 'fx.js', 'game.js', 'ui.js', 'ai-worker.js', 'manifest.json', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));

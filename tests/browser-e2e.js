@@ -137,7 +137,7 @@ function layoutCheck(pg) {
       const f = SS + `../.gif/f${String(n++).padStart(3, '0')}.png`;
       frames.push(f);
       await pg.screenshot({ path: f, clip: await pg.evaluate(() => { const r = document.getElementById('side0').getBoundingClientRect(); return { x: r.left, y: r.top, width: r.width, height: r.height }; }) });
-      if (!shot && await pg.evaluate(() => { const e = document.getElementById('pop0'); return e.textContent.startsWith(String(Math.max(2, GBP.game.players[0].chain))) && e.classList.contains('show') && GBP.game.players[0].chain >= 3; })) {
+      if (!shot && await pg.evaluate(() => { const e = document.getElementById('pop0'); return e.textContent.startsWith(String(Math.max(2, GBP.game.players[0].chain))) && (e.classList.contains('show') || e.classList.contains('punch')) && GBP.game.players[0].chain >= 3; })) {
         await sleep(120); await pg.screenshot({ path: SS + 'endless_chain.png' }); shot = true;
       }
     }
