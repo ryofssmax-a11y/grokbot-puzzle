@@ -1,0 +1,72 @@
+{
+ "fever": {
+  "maxChain": 6,
+  "unlocked": [
+   "first_clear",
+   "chain3",
+   "chain5",
+   "score10k"
+  ],
+  "perf": {
+   "frames": 364,
+   "slow": 49,
+   "worst": "50ms",
+   "maxParticles": 317
+  },
+  "feverShot": true,
+  "toastShot": true,
+  "frames": 51
+ },
+ "allClear": {
+  "banner": "ぜんけし!",
+  "allClears": 1,
+  "gained": 2222
+ },
+ "realGame": {
+  "totalGames": 1,
+  "history": 1,
+  "result": true
+ },
+ "records": {
+  "top": 3,
+  "badgesUnlocked": 6,
+  "history": 6,
+  "cpuRows": 3,
+  "afterReset": 0
+ },
+ "shapes": {
+  "pickers": 5,
+  "blue": "cloud",
+  "garbage": "rock"
+ },
+ "reducedMotion": {
+  "shook": false,
+  "fever": false,
+  "maxChain": 0
+ },
+ "layout 390x844": {
+  "endless": [],
+  "fieldVsControls": true,
+  "battle": [],
+  "records": [],
+  "settings": [],
+  "settingsFits": true
+ },
+ "layout 375x667": {
+  "endless": [],
+  "fieldVsControls": true,
+  "battle": [],
+  "records": [],
+  "settings": [],
+  "settingsFits": true
+ },
+ "layout 1280x800": {
+  "endless": [],
+  "fieldVsControls": true,
+  "battle": [],
+  "records": [],
+  "settings": [],
+  "settingsFits": true
+ }
+}
+ERRORS: none
